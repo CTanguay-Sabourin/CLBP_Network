@@ -1,0 +1,19 @@
+### FOR SESSION 2, on COPY DATA #####
+# Once finished, specify for each session and each run
+# This code is done for the Copy Data file, with only ses-2 with T1w of ses-5
+
+##### Cropping, Skull Extraction & Structural Segmentation #####
+#!/bin/bash
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy #cd path/to/files
+fileNames=($(ls -d sub*))
+shift
+for isub in "${fileNames[@]}"
+do
+echo $isub 
+robustfov -i $isub/ses-2/anat/${isub}_ses-2_T1w.nii.gz -r $isub/ses-2/anat/${isub}_ses-2_T1w_crop.nii.gz
+bet $isub/ses-2/anat/${isub}_ses-2_T1w_crop.nii.gz $isub/ses-2/anat/${isub}_ses-2_T1w_crop_brain.nii.gz
+fast $isub/ses-2/anat/${isub}_ses-2_T1w_crop_brain.nii.gz
+done
+
+# If you need to restart the commands and you want your BIDS directory clean
+#
