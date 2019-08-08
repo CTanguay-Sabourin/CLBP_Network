@@ -1,19 +1,215 @@
-### FOR SESSION 2, on COPY DATA #####
-# Once finished, specify for each session and each run
-# This code is done for the Copy Data file, with only ses-2 with T1w of ses-5
 
-##### Cropping, Skull Extraction & Structural Segmentation #####
+#/Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/ = /Path/To/Data
+
+### FOR SESSION 2, on COPY DATA #####
+#### Cropping, Skull Extraction & Structural Segmentation ####
 #!/bin/bash
-cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy #cd path/to/files
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/
+### Participant Loop
+fileNames=($(ls -d sub*)) #Participant list
+shift
+for isub in "${fileNames[@]}"
+do
+echo $isub
+### Session loop
+	for ises in ses-2 # list sessions
+	do
+	robustfov -i $isub/$ises/anat/${isub}_${ises}_T1w.nii.gz -r $isub/$ises/anat/${isub}_${ises}_T1w_crop.nii.gz
+	bet $isub/$ises/anat/${isub}_${ises}_T1w_crop.nii.gz $isub/$ises/anat/${isub}_${ises}_T1w_crop_brain.nii.gz
+	fast $isub/$ises/anat/${isub}_${ises}_T1w_crop_brain.nii.gz
+	run_first_all -i $isub/$ises/anat/${isub}_${ises}_T1w.nii.gz
+	done
+done
+
+
+##### Global Brain Volume, with fslstats #####
+#!/bin/bash
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/
+cat participants.tsv | tr -s '[:blank:]' ',' > GlobalVolume1.csv
+echo session,volume > GlobalVolume2.csv
+### Participant Loop
+fileNames=($(ls -d sub*)) #Participant list
+shift
+for isub in "${fileNames[@]}";
+do
+echo $isub
+### Session loop
+	for ises in ses-2
+	do
+	cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/$isub/$ises/anat/
+	echo $ises > ${isub}_GB_1.txt
+	fslstats ${isub}_${ises}_T1w_crop_brain_pve_1.nii.gz -M -V && \
+	fslstats ${isub}_${ises}_T1w_crop_brain_pve_1.nii.gz -M -V | awk '{ print $1 * $3 }' > ${isub}_GB_2.txt \
+	|| echo "NaN" > ${isub}_GB_2.txt
+	cat ${isub}_GB_2.txt | tr -s '[:blank:]' ',' > ${isub}_GB_3.txt
+	# Combine files as columns in csv
+	paste -d, ${isub}_GB_1.txt ${isub}_GB_3.txt > ${isub}_GB.csv
+	mv /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/$isub/$ises/anat/${isub}_GB.csv /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/
+	rm *_GB_*
+	cd ../../..
+ 	done
+done
+### Merging in one big file
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/
+cat *_GB.csv >> GlobalVolume3.csv
+cat GlobalVolume3.csv >> GlobalVolume2.csv
+paste -d, GlobalVolume1.csv GlobalVolume2.csv > GlobalVolume.csv;
+sleep 1
+rm *_GB* # Remove unwanted copies;
+sleep 1
+rm GlobalVolume1.csv GlobalVolume2.csv GlobalVolume3.csv
+
+##### fsl subcortical segmentation #####
+#!/bin/bash
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/
+### Participant Loop
+for isub in sub-001
+do
+echo $isub
+### Session loop
+	for ises in ses-2
+	do
+
+#!/bin/bash
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy/
+cat participants.tsv | tr -s '[:blank:]' ',' > GlobalVolume1.csv
+echo session,volume > GlobalVolume2.csv
+### Participant Loop
+fileNames=($(ls -d sub*)) #Participant list
+shift
+for isub in "${fileNames[@]}";
+do
+echo $isub
+### Session loop
+	for ises in ses-2
+	do
+# Left Accumbens
+echo ${isub} >> ${isub}_L-Accu_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 25.5 -u 26.5 -V \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 25.5 -u 26.5 -V >> ${isub}_L-Accu_volume2.txt || echo "NA, NA" >> ${isub}_L-Accu_volume2.txt
+cat ${isub}_L-Accu_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_L-Accu_volume3.txt
+paste -d, ${isub}_L-Accu_volume1.txt ${isub}_L-Accu_volume3.txt >> ${isub}_L-Accu_Vol.csv
+mv ${isub}_L-Accu_Vol.csv cd ../../..
+# Left Hippocampus
+echo ${isub} >> ${isub}_L-Hipp_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 16.5 -u 17.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 16.5 -u 17.5 -V >> ${isub}_L-Hipp_volume2.txt || echo "NA, NA" >> ${isub}_L-Hipp_volume2.txt
+cat ${isub}_L-Hipp_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_L-Hipp_volume3.txt
+paste -d, ${isub}_L-Hipp_volume1.txt ${isub}_L-Hipp_volume3.txt >> ${isub}_L-Hipp_Vol.csv
+mv ${isub}_L-Hipp_Vol.csv cd ../../..
+# Left Amygdala
+echo ${isub} >> ${isub}_L-Amyg_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 17.5 -u 18.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 17.5 -u 18.5 -V >> ${isub}_L-Amyg_volume2.txt || echo "NA, NA" >> ${isub}_L-Amyg_volume2.txt
+cat ${isub}_L-Amyg_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_L-Amyg_volume3.txt
+paste -d, ${isub}_L-Amyg_volume1.txt ${isub}_L-Amyg_volume3.txt >> ${isub}_L-Amyg_Vol.csv
+mv ${isub}_L-Amyg_Vol.csv cd ../../..
+# Right Accumbens
+echo ${isub} >> ${isub}_R-Accu_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 57.5 -u 58.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 57.5 -u 58.5 -V >> ${isub}_R-Accu_volume2.txt || echo "NA, NA" >> ${isub}_R-Accu_volume2.txt
+cat ${isub}_R-Accu_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_R-Accu_volume3.txt
+paste -d, ${isub}_R-Accu_volume1.txt ${isub}_R-Accu_volume3.txt >> ${isub}_R-Accu_Vol.csv
+mv ${isub}_R-Accu_Vol.csv cd ../../..
+# Right Hippocampus
+echo ${isub} >> ${isub}_R-Hipp_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 52.5 -u 53.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 52.5 -u 53.5 -V >> ${isub}_R-Hipp_volume2.txt || echo "NA, NA" >> ${isub}_R-Hipp_volume2.txt
+cat ${isub}_R-Hipp_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_R-Hipp_volume3.txt
+paste -d, ${isub}_R-Hipp_volume1.txt ${isub}_R-Hipp_volume3.txt >> ${isub}_R-Hipp_Vol.csv
+mv ${isub}_R-Hipp_Vol.csv cd ../../..
+# Right Amygdala
+echo ${isub} >> ${isub}_R-Amyg_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 53.5 -u 54.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 53.5 -u 54.5 -V >> ${isub}_R-Amyg_volume2.txt || echo "NA, NA" >> ${isub}_R-Amyg_volume2.txt
+cat ${isub}_R-Amyg_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_R-Amyg_volume3.txt
+paste -d, ${isub}_R-Amyg_volume1.txt ${isub}_R-Amyg_volume3.txt >> ${isub}_R-Amyg_Vol.csv
+mv ${isub}_R-Amyg_Vol.csv cd ../../..
+rm *volume1.txt
+rm *volume2.txt
+rm *volume3.txt
+cd ../../..
+done
+# Merging in one big file
+#!/bin/bash
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy
+cat *_L-Accu_Vol.csv >> L-Accu_Volume_ises.csv
+cat *_L-Hipp_Vol.csv >> L-Hipp_Volume_ises.csv
+cat *_L-Amyg_Vol.csv >> L-Amyg_Volume_ises.csv
+cat *_R-Accu_Vol.csv >> R-Accu_Volume_ises.csv
+cat *_R-Hipp_Vol.csv >> R-Hipp_Volume_ises.csv
+cat *_R-Amyg_Vol.csv >> R-Amyg_Volume_ises.csv
+mkdir Volumetry
+mv *_Volume_ises.csv Volumetry
+# Remove unwanted copies
+rm *_Vol.csv
+
+
+##### fsl stats, finding REGIONAL SUBCORTICAL volume of regions #####
+#!/bin/bash
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy
 fileNames=($(ls -d sub*))
 shift
 for isub in "${fileNames[@]}"
 do
-echo $isub 
-robustfov -i $isub/ses-2/anat/${isub}_ses-2_T1w.nii.gz -r $isub/ses-2/anat/${isub}_ses-2_T1w_crop.nii.gz
-bet $isub/ses-2/anat/${isub}_ses-2_T1w_crop.nii.gz $isub/ses-2/anat/${isub}_ses-2_T1w_crop_brain.nii.gz
-fast $isub/ses-2/anat/${isub}_ses-2_T1w_crop_brain.nii.gz
+cd $isub/$ises/anat
+	# Left Accumbens
+echo ${isub} >> ${isub}_L-Accu_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 25.5 -u 26.5 -V \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 25.5 -u 26.5 -V >> ${isub}_L-Accu_volume2.txt || echo "NA, NA" >> ${isub}_L-Accu_volume2.txt
+cat ${isub}_L-Accu_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_L-Accu_volume3.txt
+paste -d, ${isub}_L-Accu_volume1.txt ${isub}_L-Accu_volume3.txt >> ${isub}_L-Accu_Vol.csv
+mv ${isub}_L-Accu_Vol.csv cd ../../..
+	# Left Hippocampus
+echo ${isub} >> ${isub}_L-Hipp_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 16.5 -u 17.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 16.5 -u 17.5 -V >> ${isub}_L-Hipp_volume2.txt || echo "NA, NA" >> ${isub}_L-Hipp_volume2.txt
+cat ${isub}_L-Hipp_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_L-Hipp_volume3.txt
+paste -d, ${isub}_L-Hipp_volume1.txt ${isub}_L-Hipp_volume3.txt >> ${isub}_L-Hipp_Vol.csv
+mv ${isub}_L-Hipp_Vol.csv cd ../../..
+	# Left Amygdala
+echo ${isub} >> ${isub}_L-Amyg_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 17.5 -u 18.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 17.5 -u 18.5 -V >> ${isub}_L-Amyg_volume2.txt || echo "NA, NA" >> ${isub}_L-Amyg_volume2.txt
+cat ${isub}_L-Amyg_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_L-Amyg_volume3.txt
+paste -d, ${isub}_L-Amyg_volume1.txt ${isub}_L-Amyg_volume3.txt >> ${isub}_L-Amyg_Vol.csv
+mv ${isub}_L-Amyg_Vol.csv cd ../../..
+	# Right Accumbens
+echo ${isub} >> ${isub}_R-Accu_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 57.5 -u 58.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 57.5 -u 58.5 -V >> ${isub}_R-Accu_volume2.txt || echo "NA, NA" >> ${isub}_R-Accu_volume2.txt
+cat ${isub}_R-Accu_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_R-Accu_volume3.txt
+paste -d, ${isub}_R-Accu_volume1.txt ${isub}_R-Accu_volume3.txt >> ${isub}_R-Accu_Vol.csv
+mv ${isub}_R-Accu_Vol.csv cd ../../..
+	# Right Hippocampus
+echo ${isub} >> ${isub}_R-Hipp_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 52.5 -u 53.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 52.5 -u 53.5 -V >> ${isub}_R-Hipp_volume2.txt || echo "NA, NA" >> ${isub}_R-Hipp_volume2.txt
+cat ${isub}_R-Hipp_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_R-Hipp_volume3.txt
+paste -d, ${isub}_R-Hipp_volume1.txt ${isub}_R-Hipp_volume3.txt >> ${isub}_R-Hipp_Vol.csv
+mv ${isub}_R-Hipp_Vol.csv cd ../../..
+	# Right Amygdala
+echo ${isub} >> ${isub}_R-Amyg_volume1.txt
+fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 53.5 -u 54.5 -V  \
+&& fslstats ${isub}_${ises}_T1w_all_fast_firstseg.nii.gz -l 53.5 -u 54.5 -V >> ${isub}_R-Amyg_volume2.txt || echo "NA, NA" >> ${isub}_R-Amyg_volume2.txt
+cat ${isub}_R-Amyg_volume2.txt | tr -s '[:blank:]' ',' >> ${isub}_R-Amyg_volume3.txt
+paste -d, ${isub}_R-Amyg_volume1.txt ${isub}_R-Amyg_volume3.txt >> ${isub}_R-Amyg_Vol.csv
+mv ${isub}_R-Amyg_Vol.csv cd ../../..
+rm *volume1.txt
+rm *volume2.txt
+rm *volume3.txt
+cd ../../..
 done
-
-# If you need to restart the commands and you want your BIDS directory clean
-#
+# Merging in one big file
+#!/bin/bash
+cd /Volumes/Harddrive_CTS/MRI/Placebo_1_Data_Copy
+cat *_L-Accu_Vol.csv >> L-Accu_Volume_ises.csv
+cat *_L-Hipp_Vol.csv >> L-Hipp_Volume_ises.csv
+cat *_L-Amyg_Vol.csv >> L-Amyg_Volume_ises.csv
+cat *_R-Accu_Vol.csv >> R-Accu_Volume_ises.csv
+cat *_R-Hipp_Vol.csv >> R-Hipp_Volume_ises.csv
+cat *_R-Amyg_Vol.csv >> R-Amyg_Volume_ises.csv
+mkdir Volumetry
+mv *_Volume_ises.csv Volumetry
+# Remove unwanted copies
+rm *_Vol.csv
