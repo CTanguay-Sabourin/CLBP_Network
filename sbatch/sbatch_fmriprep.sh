@@ -2,8 +2,8 @@
 #SBATCH --job-name=fmriprep
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus=8
-#SBATCH --mem=32G
+#SBATCH --cpus=32
+#SBATCH --mem=128G
 #SBATCH --time=24:00:00
 #SBATCH --account=def-mathroy
 #SBATCH --mail-user=christophe.tanguaysabourin@mail.mcgill.ca
