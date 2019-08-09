@@ -1,0 +1,15 @@
+# Free Surfer script
+module load freesurfer/5.3.0
+module load python/2.7
+export SUBJECTS_DIR=/home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/FMRIPREP_OUTPUT/freesurfer/
+export FREESURFER_HOME=/cvmfs/soft.computecanada.ca/easybuild/software/2017/Core/freesurfer/5.3.0
+cd /home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/Placebo_1_Data_Copy
+cat participants.tsv | tr -s '[:blank:]' ',' > GlobalVolume1.csv
+mv /home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/Placebo_1_Data_Copy/GlobalVolume1.csv /home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/FMRIPREP_OUTPUT/freesurfer
+cd /home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/FMRIPREP_OUTPUT/freesurfer
+fileNames=($(ls -d sub-*))
+asegstats2table --subjects "${fileNames[@]}" --meas volume --segno 17 18 26 53 54 58 --tablefile aseg_stats.txt --skip
+cat aseg_stats.txt | tr -s '[:blank:]' ',' > GlobalVolume2.csv
+paste -d, GlobalVolume1.csv GlobalVolume2.csv > GlobalVolume.fs.csv
+rm aseg_stats.txt GlobalVolume1.csv GlobalVolume2.csv
+cd /home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/
