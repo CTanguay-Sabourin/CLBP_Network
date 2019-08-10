@@ -15,13 +15,12 @@
 SUBJECT=$1
 
 module load singularity/3.2
-
 singularity run --cleanenv --bind /home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/Placebo_1_Data_Copy:/data \
 --bind /home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/FMRIPREP_OUTPUT:/out \
 /home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/fmriprep.1.4.1.simg \
+-w '~/scratch' \
 --participant-label <SUBJECT> \
 --ignore slicetiming \
 --output-spaces 'MNI152NLin6Asym' 'T1w' \
 --fs-license-file '/home/tangsab8/projects/ctb-mathroy/tangsab8/CLBP_Network_Project/license.txt' \
--w ~/home/tangsab8/scratch \
 /data /out participant
