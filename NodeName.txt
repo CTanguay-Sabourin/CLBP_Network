@@ -4,7 +4,7 @@ Peak of Pain in EMAs
 McGill Pain Questionnaire
 Pain Detect Questionnaire
 Pain Catastrophizing Scale
-Beck Depression Inventory-II
+Beck Depression Inventory
 Age
 Duration of Pain (months)
 Numeric Rating Scale of Pain (/10)
