@@ -11,4 +11,4 @@ Numeric Rating Scale of Pain (/10)
 Nuccleus Accumbens Volume
 Amygdala Volume
 Hippocampus Volume
-NAc-mPFC Seed Correlation
+NAc-mPFC Seed Connectivity
